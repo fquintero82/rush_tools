@@ -50,7 +50,7 @@ class MRMSRainfallExtractor:
         lon_idxs = np.clip(lon_idxs, 0, len(self.grid_lons) - 1)
         
         return lat_idxs, lon_idxs
-
+    
     def fetch_day(self, year, doy):
         """
         Finds the 24 hourly files for the given day using the exact naming convention,
@@ -101,7 +101,7 @@ class MRMSRainfallExtractor:
 if __name__ == '__main__':
     lats = np.random.uniform(25, 49, 1000000)
     lons = np.random.uniform(-125, -67, 1000000)
-    mrms_folder = "/home/fquinteroduque/LSS/IFC/mrms_netcdf_archive/mrms/2020/"
-    mrms_folder = "/Dedicated/IFC/mrms_netcdf_archive/mrms/2020/"
+    mrms_folder = "Y:\\mrms_netcdf_archive\\mrms\\2020\\"
+    #mrms_folder = "/Dedicated/IFC/mrms_netcdf_archive/mrms/2020/"
     extractor = MRMSRainfallExtractor(mrms_folder, lats, lons)
     rainfall_matrix = extractor.fetch_day(2020, 1)  # Returns shape (1000000, 24)
