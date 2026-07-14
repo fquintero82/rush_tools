@@ -5,7 +5,7 @@ import numpy as np
 from datetime import datetime, timedelta
 
 class MRMSRainfallExtractor:
-    def __init__(self, folder_path, lats, lons):
+    def __init__(self, folder_path, lats, lons,from_npy=False):
         """
         Initializes with the folder containing hourly MRMS NetCDF files
         and the target coordinates.
@@ -15,18 +15,19 @@ class MRMSRainfallExtractor:
         self.lons = np.array(lons)
         self.num_points = len(self.lats)
         
-        # 1. Open a sample file safely using h5netcdf to get the spatial grid vectors
-        sample_file = self._get_sample_file()
-        with xr.open_dataset(sample_file, engine="h5netcdf") as ds:
-            self.grid_lats = ds.Lat.values
-            self.grid_lons = ds.Lon.values
-            
-        # Calculate the cell resolution dynamically
-        self.lat_res = abs(self.grid_lats[1] - self.grid_lats[0])
-        self.lon_res = abs(self.grid_lons[1] - self.grid_lons[0])
-            
-        # 2. Precalculate spatial integer indices
-        self.lat_idxs, self.lon_idxs = self._precalculate_spatial_indices()
+        if not from_npy:
+            # 1. Open a sample file safely using h5netcdf to get the spatial grid vectors
+            sample_file = self._get_sample_file()
+            with xr.open_dataset(sample_file, engine="h5netcdf") as ds:
+                self.grid_lats = ds.Lat.values
+                self.grid_lons = ds.Lon.values
+                
+            # Calculate the cell resolution dynamically
+            self.lat_res = abs(self.grid_lats[1] - self.grid_lats[0])
+            self.lon_res = abs(self.grid_lons[1] - self.grid_lons[0])
+                
+            # 2. Precalculate spatial integer indices
+            self.lat_idxs, self.lon_idxs = self._precalculate_spatial_indices()
 
     def _get_sample_file(self):
         """Finds the first NetCDF file in the directory to use as a template."""
@@ -50,7 +51,7 @@ class MRMSRainfallExtractor:
         lon_idxs = np.clip(lon_idxs, 0, len(self.grid_lons) - 1)
         
         return lat_idxs, lon_idxs
-    
+
     def fetch_day(self, year, doy):
         """
         Finds the 24 hourly files for the given day using the exact naming convention,
@@ -97,11 +98,44 @@ class MRMSRainfallExtractor:
                 
         return daily_output
 
+    def fetch_from_npy(self, start_time, end_time):
+        """
+        Finds the 24 hourly files for the given day using the exact naming convention,
+        extracts the values, and returns a matrix of shape (num_points, 24).
+        """
+        # Convert year and Day of Year to a string date (e.g., "20240101")
+        
+        nt = int((end_time - start_time) / 3600) + 1  # Number of time steps (hours)
+        # Pre-allocate the output matrix: (1 million points, 24 hours)
+        output = np.zeros((self.num_points, nt), dtype=np.float32)
+        
+        print(f"Processing MRMS data for {date_str}...")
+        counter = 0
+        for i in range(start_time, end_time, 3600):
+            # 1. Build the two potential exact paths
+            filename = f"{i}.py"
+            
+            path_f = os.path.join(self.folder_path, filename)
+                
+            try:
+                # Open safely with h5netcdf within a context manager
+                    # Load 2D slice into memory
+                    data = np.load(path_f)
+                    
+                    # Extract the 1M points via fancy indexing using precalculated locations
+                    # Check dimension ordering! Swap to [lon, lat] if MRMS is ordered (Lon, Lat)
+                    output[:, counter] = data
+                    counter += 1
+            except Exception as e:
+                print(f"Error reading file {filename}: {e}")
+                
+        return output
+
 # --- Usage Example ---
 if __name__ == '__main__':
     lats = np.random.uniform(25, 49, 1000000)
     lons = np.random.uniform(-125, -67, 1000000)
-    mrms_folder = "Y:\\mrms_netcdf_archive\\mrms\\2020\\"
-    #mrms_folder = "/Dedicated/IFC/mrms_netcdf_archive/mrms/2020/"
+    mrms_folder = "/home/fquinteroduque/LSS/IFC/mrms_netcdf_archive/mrms/2020/"
+    mrms_folder = "/Dedicated/IFC/mrms_netcdf_archive/mrms/2020/"
     extractor = MRMSRainfallExtractor(mrms_folder, lats, lons)
     rainfall_matrix = extractor.fetch_day(2020, 1)  # Returns shape (1000000, 24)
