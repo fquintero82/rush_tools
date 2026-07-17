@@ -109,7 +109,6 @@ class MRMSRainfallExtractor:
         # Pre-allocate the output matrix: (1 million points, 24 hours)
         output = np.zeros((self.num_points, nt), dtype=np.float32)
         
-        print(f"Processing MRMS data for {date_str}...")
         counter = 0
         for i in range(start_time, end_time, 3600):
             # 1. Build the two potential exact paths
