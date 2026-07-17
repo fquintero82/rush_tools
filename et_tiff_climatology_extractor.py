@@ -40,16 +40,27 @@ class EtTiffExtractor:
         filename = f"mean_{doy}.tif"
         return os.path.join(self.folder_path, filename)
 
-    def extract_period(self, start_doy, end_doy):
+    def extract_period(self, start_unixtime:int, end_unixtime:int):
         """
-        Extracts ET values for a range of days.
-        Returns shape: (num_points, num_days)
+        Extracts ET values for a range of hours.
+        Returns shape: (num_points, num_hours)
         """
-        num_days = end_doy - start_doy + 1
-        output = np.zeros((self.num_points, num_days), dtype=np.float32)
+        hours = np.arange(start_unixtime, end_unixtime + 1, 3600)        #create a sequence of the hours in the range
+        dt64 = hours.astype('datetime64[s]')
 
-        for i, doy in enumerate(range(start_doy, end_doy + 1)):
-            file_path = self.get_file_path(doy)
+        # 3. Calculate Day of Year: Subtract the start of the year and add 1
+        # (We cast to 'datetime64[D]' to get the day string/units)
+        year_start = dt64.astype('datetime64[Y]')
+        doys = (dt64.astype('datetime64[D]') - year_start).astype(int) + 1
+        #find the corresponding filepath for each day of year
+        #file_paths = [self.get_file_path(doy) for doy in doys]
+
+
+        output = np.zeros((self.num_points, len(hours)), dtype=np.float32)
+
+        # Loop through each unique file once, extract the ET values, and fill the matching hours in the output array
+        for doy in np.unique(doys):
+            file_path = self.get_file_path(int(doy))
             
             if os.path.exists(file_path):
                 with rasterio.open(file_path) as src:
@@ -59,12 +70,20 @@ class EtTiffExtractor:
                     
                     # Read the 2D grid and extract our points
                     data = src.read(1)
-                    output[:, i] = data[self.rows, self.cols] / 1000. #mm/day
+                    values = data[self.rows, self.cols] / 1000.0  # mm/day
+                    hour_indices = np.where(doys == doy)[0]
+                    output[:, hour_indices] = values[:, None]
                 print(f"Processed Day {doy}")
             else:
                 print(f"Warning: File missing for Day {doy}: {file_path}")
         
         return output
+
+
+
+
+ 
+    
 if __name__=="__main__":
     # --- Usage Example ---
     et_folder = "/home/fquinteroduque/LSS/preclab/data/modisSSEBop/et_climatology"
@@ -73,6 +92,6 @@ if __name__=="__main__":
     lons = np.random.uniform(-125, -67, 1000000)
     extractor = EtTiffExtractor(et_folder, lats, lons)
     # # Get full year 2002
-    et = extractor.extract_period( 1, 10)
+    et = extractor.extract_period( 1783987200, 1784073600)
     print(et.shape)  # Should be (1000000, 10)
     print('here')
