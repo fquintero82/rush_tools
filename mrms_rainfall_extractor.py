@@ -15,7 +15,7 @@ class MRMSRainfallExtractor:
         self.lons = np.array(lons)
         self.num_points = len(self.lats)
         
-        if not from_npy:
+        if from_npy==False:
             # 1. Open a sample file safely using h5netcdf to get the spatial grid vectors
             sample_file = self._get_sample_file()
             with xr.open_dataset(sample_file, engine="h5netcdf") as ds:
