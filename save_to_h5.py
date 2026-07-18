@@ -8,7 +8,7 @@ def _create_empty_states_file(links = None):
         raise ValueError("Links must be provided to create the states file.")
     n_links = len(links)
     fileout = '/Dedicated/IFC/rush/states.h5'
-    vars = ['static', 'surface', 'toplayer', 'bottomlayer', 'swe']
+    vars = ['static', 'surface', 'toplayer', 'bottomlayer', 'swe','routing_output','routing_initial']
     with h5py.File(fileout, 'w') as f:
         for var in vars:
             f.create_dataset(var, 
@@ -26,7 +26,7 @@ def _create_empty_states_file(links = None):
         Writes the states to the HDF5 file. If the file does not exist, it creates it.
         """
         #states is a list of dictionaries with keys:
-        #  'static', 'surface', 'toplayer', 'bottomlayer', 'swe'  
+        #  'static', 'surface', 'toplayer', 'bottomlayer', 'swe', 'routing_output', 'routing_initial'
         
 
         #if fileout does not exist, create it with the required structure
@@ -34,20 +34,26 @@ def _create_empty_states_file(links = None):
             _create_empty_states_file(links=links)
 
         with h5py.File(fileout, 'a') as f:
-            
-            
-            # Append the new time value
-            current_time_size = f['time'].shape[0]
-            f['time'].resize((current_time_size + 1,))
-            f['time'][current_time_size] = time
-            
-            for var in states:
-                if var not in f:
-                    raise ValueError(f"Variable '{var}' not found in the HDF5 file.")
+            #firsth check if the time already exists in the file, if so, overwrite the data for that time
+            if time in f['time']:
+                time_index = np.where(f['time'][:] == time)[0][0]
+                for var in states:
+                    if var not in f:
+                        raise ValueError(f"Variable '{var}' not found in the HDF5 file.")
+                    f[var][:, time_index] = states[var]
+            else:
+                # Append the new time value
+                current_time_size = f['time'].shape[0]
+                f['time'].resize((current_time_size + 1,))
+                f['time'][current_time_size] = time
                 
-                # Resize the dataset to accommodate new data
-                current_size = f[var].shape[1]
-                f[var].resize((f[var].shape[0], current_size + 1))
-                
-                # Write the new state data
-                f[var][:, current_size] = states[var]
+                for var in states:
+                    if var not in f:
+                        raise ValueError(f"Variable '{var}' not found in the HDF5 file.")
+                    
+                    # Resize the dataset to accommodate new data
+                    current_size = f[var].shape[1]
+                    f[var].resize((f[var].shape[0], current_size + 1))
+                    
+                    # Write the new state data
+                    f[var][:, current_size] = states[var]
