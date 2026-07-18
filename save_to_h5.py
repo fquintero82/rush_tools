@@ -8,13 +8,15 @@ def _create_empty_states_file(links = None):
         raise ValueError("Links must be provided to create the states file.")
     n_links = len(links)
     fileout = '/Dedicated/IFC/rush/states.h5'
-    vars = ['static', 'surface', 'subsurface', 'groundwater', 'swe']
+    vars = ['static', 'surface', 'toplayer', 'bottomlayer', 'swe']
     with h5py.File(fileout, 'w') as f:
         for var in vars:
             f.create_dataset(var, 
                             shape=(n_links,0),
                             maxshape=(n_links, None),
                             chunks=(n_links, 1),
+                            compression='gzip',
+                            scaleoffset=2, #scale=2 means multiply by 10^2 (keeps 2 decimal places)
                             dtype='float16')
         f.attrs['links'] = np.array(links, dtype=int)  # Store links as integers
         f.create_dataset('time', shape=(0,), maxshape=(None,), chunks=(1,), dtype='int32')  # Time dataset  
@@ -24,7 +26,7 @@ def _create_empty_states_file(links = None):
         Writes the states to the HDF5 file. If the file does not exist, it creates it.
         """
         #states is a list of dictionaries with keys:
-        #  'static', 'surface', 'subsurface', 'groundwater', 'swe'  
+        #  'static', 'surface', 'toplayer', 'bottomlayer', 'swe'  
         
 
         #if fileout does not exist, create it with the required structure
