@@ -36,9 +36,12 @@ def write_states_to_h5(states,links, validtime,issuetime, fileout='/Dedicated/IF
 
     with h5py.File(fileout, 'a') as f:
         # Append the new time value
-        current_time_size = f['time'].shape[0]
-        f['time'].resize((current_time_size + len(validtime),))
-        f['time'][current_time_size] = validtime
+        current_time_size = f['validtime'].shape[0]
+        f['validtime'].resize((current_time_size + len(validtime),))
+        f['validtime'][current_time_size] = validtime
+        f['issuetime'].resize((current_time_size + len(issuetime),))
+        f['issuetime'][current_time_size] = issuetime
+
         
         for var in states:
             if var not in f:
