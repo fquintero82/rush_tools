@@ -19,7 +19,7 @@ def _create_empty_states_file(links = None):
                             scaleoffset=2, #scale=2 means multiply by 10^2 (keeps 2 decimal places)
                             dtype=np.float32)
         f.create_dataset('links', shape=(n_links,), dtype=np.uint32, compression='gzip')
-        
+
         f['links'][:] = np.array(links, dtype=np.uint32)
         f.create_dataset('validtime', shape=(0,), maxshape=(None,), chunks=(1,), dtype=np.uint32, compression='gzip')  # Time dataset
         f.create_dataset('issuetime', shape=(0,), maxshape=(None,), chunks=(1,), dtype=np.uint32, compression='gzip')  # Time dataset
@@ -40,9 +40,9 @@ def write_states_to_h5(states,links, validtime,issuetime, fileout='/Dedicated/IF
         # Append the new time value
         current_time_size = f['validtime'].shape[0]
         f['validtime'].resize((current_time_size + len(validtime),))
-        f['validtime'][current_time_size] = validtime
+        f['validtime'][current_time_size:current_time_size + len(validtime)] = validtime
         f['issuetime'].resize((current_time_size + len(issuetime),))
-        f['issuetime'][current_time_size] = issuetime
+        f['issuetime'][current_time_size:current_time_size + len(issuetime)] = issuetime
 
         
         for var in states:
@@ -54,4 +54,4 @@ def write_states_to_h5(states,links, validtime,issuetime, fileout='/Dedicated/IF
             f[var].resize((f[var].shape[0], current_size + len(validtime),))
             
             # Write the new state data
-            f[var][:, current_size] = states[var]
+            f[var][:, current_size:current_size + len(validtime)] = states[var]
