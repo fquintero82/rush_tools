@@ -18,7 +18,8 @@ def _create_empty_states_file(links = None):
                             compression='gzip',
                             scaleoffset=2, #scale=2 means multiply by 10^2 (keeps 2 decimal places)
                             dtype=np.float32)
-
+        f.create_dataset('links', shape=(n_links,), dtype=np.uint32, compression='gzip')
+        
         f['links'][:] = np.array(links, dtype=np.uint32)
         f.create_dataset('validtime', shape=(0,), maxshape=(None,), chunks=(1,), dtype=np.uint32, compression='gzip')  # Time dataset
         f.create_dataset('issuetime', shape=(0,), maxshape=(None,), chunks=(1,), dtype=np.uint32, compression='gzip')  # Time dataset
