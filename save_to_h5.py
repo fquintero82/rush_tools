@@ -22,7 +22,7 @@ def _create_empty_states_file(links = None):
         f.create_dataset('validtime', shape=(0,), maxshape=(None,), chunks=(1,), dtype='uint32', compression='gzip')  # Time dataset
         f.create_dataset('issuetime', shape=(0,), maxshape=(None,), chunks=(1,), dtype='uint32')  # Time dataset
 
-def write_states_to_h5(states,links, time, fileout='/Dedicated/IFC/rush/states.h5'):
+def write_states_to_h5(states,links, validtime,issuetime, fileout='/Dedicated/IFC/rush/states.h5'):
     """
     Writes the states to the HDF5 file. If the file does not exist, it creates it.
     """
@@ -35,26 +35,18 @@ def write_states_to_h5(states,links, time, fileout='/Dedicated/IFC/rush/states.h
         _create_empty_states_file(links=links)
 
     with h5py.File(fileout, 'a') as f:
-        #firsth check if the time already exists in the file, if so, overwrite the data for that time
-        if time in f['time']:
-            time_index = np.where(f['time'][:] == time)[0][0]
-            for var in states:
-                if var not in f:
-                    raise ValueError(f"Variable '{var}' not found in the HDF5 file.")
-                f[var][:, time_index] = states[var]
-        else:
-            # Append the new time value
-            current_time_size = f['time'].shape[0]
-            f['time'].resize((current_time_size + 1,))
-            f['time'][current_time_size] = time
+        # Append the new time value
+        current_time_size = f['time'].shape[0]
+        f['time'].resize((current_time_size + len(validtime),))
+        f['time'][current_time_size] = validtime
+        
+        for var in states:
+            if var not in f:
+                raise ValueError(f"Variable '{var}' not found in the HDF5 file.")
             
-            for var in states:
-                if var not in f:
-                    raise ValueError(f"Variable '{var}' not found in the HDF5 file.")
-                
-                # Resize the dataset to accommodate new data
-                current_size = f[var].shape[1]
-                f[var].resize((f[var].shape[0], current_size + 1))
-                
-                # Write the new state data
-                f[var][:, current_size] = states[var]
+            # Resize the dataset to accommodate new data
+            current_size = f[var].shape[1]
+            f[var].resize((f[var].shape[0], current_size + len(validtime),))
+            
+            # Write the new state data
+            f[var][:, current_size] = states[var]
