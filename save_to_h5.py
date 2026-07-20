@@ -54,4 +54,5 @@ def write_states_to_h5(states,links, validtime,issuetime, fileout='/Dedicated/IF
             f[var].resize((f[var].shape[0], current_size + len(validtime),))
             
             # Write the new state data
+            print(states[var].shape)
             f[var][:, current_size:current_size + len(validtime)] = states[var]
