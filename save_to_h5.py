@@ -19,7 +19,8 @@ def _create_empty_states_file(links = None):
                             scaleoffset=2, #scale=2 means multiply by 10^2 (keeps 2 decimal places)
                             dtype='float16')
         f.attrs['links'] = np.array(links, dtype=int)  # Store links as integers
-        f.create_dataset('time', shape=(0,), maxshape=(None,), chunks=(1,), dtype='int32')  # Time dataset  
+        f.create_dataset('validtime', shape=(0,), maxshape=(None,), chunks=(1,), dtype='uint32', compression='gzip')  # Time dataset
+        f.create_dataset('issuetime', shape=(0,), maxshape=(None,), chunks=(1,), dtype='uint32')  # Time dataset
 
 def write_states_to_h5(states,links, time, fileout='/Dedicated/IFC/rush/states.h5'):
     """
