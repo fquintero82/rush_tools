@@ -17,10 +17,10 @@ def _create_empty_states_file(links = None):
                             chunks=(n_links, 1),
                             compression='gzip',
                             scaleoffset=2, #scale=2 means multiply by 10^2 (keeps 2 decimal places)
-                            dtype='float16')
+                            dtype=np.float16)
         f.attrs['links'] = np.array(links, dtype=np.uint32)  # Store links as integers
-        f.create_dataset('validtime', shape=(0,), maxshape=(None,), chunks=(1,), dtype='uint32', compression='gzip')  # Time dataset
-        f.create_dataset('issuetime', shape=(0,), maxshape=(None,), chunks=(1,), dtype='uint32')  # Time dataset
+        f.create_dataset('validtime', shape=(0,), maxshape=(None,), chunks=(1,), dtype=np.uint32, compression='gzip')  # Time dataset
+        f.create_dataset('issuetime', shape=(0,), maxshape=(None,), chunks=(1,), dtype=np.uint32, compression='gzip')  # Time dataset
 
 def write_states_to_h5(states,links, validtime,issuetime, fileout='/Dedicated/IFC/rush/states.h5'):
     """
