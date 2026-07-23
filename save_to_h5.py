@@ -2,13 +2,17 @@ import h5py
 import numpy as np
 import os
 
-def _create_empty_states_file(links = None):
+def _create_empty_file(links = None,mode='state',fileout='/Dedicated/IFC/rush/states.h5'):
     #create an empty HDF5 file with the required structure to save the states
     if links is None:
         raise ValueError("Links must be provided to create the states file.")
     n_links = len(links)
-    fileout = '/Dedicated/IFC/rush/states.h5'
-    vars = ['static', 'surface', 'toplayer', 'bottomlayer', 'swe','routing_output','routing_initial']
+    if mode not in ['state','forecast']:
+        raise ValueError("Mode must be either 'state' or 'forecast'.")
+    if mode == 'state':
+        vars = ['static', 'surface', 'toplayer', 'bottomlayer', 'swe','routing_output','routing_initial']
+    elif mode == 'forecast':
+        vars = ['routing_output']
     with h5py.File(fileout, 'w') as f:
         for var in vars:
             f.create_dataset(var, 
@@ -24,7 +28,7 @@ def _create_empty_states_file(links = None):
         f.create_dataset('validtime', shape=(0,), maxshape=(None,), chunks=(1,), dtype=np.uint32, compression='gzip')  # Time dataset
         f.create_dataset('issuetime', shape=(0,), maxshape=(None,), chunks=(1,), dtype=np.uint32, compression='gzip')  # Time dataset
 
-def write_states_to_h5(states,links, validtime,issuetime, fileout='/Dedicated/IFC/rush/states.h5'):
+def write_to_h5(states,links, validtime,issuetime, mode,fileout='/Dedicated/IFC/rush/states.h5'):
     """
     Writes the states to the HDF5 file. If the file does not exist, it creates it.
     """
@@ -34,7 +38,7 @@ def write_states_to_h5(states,links, validtime,issuetime, fileout='/Dedicated/IF
 
     #if fileout does not exist, create it with the required structure
     if not os.path.exists(fileout):
-        _create_empty_states_file(links=links)
+        _create_empty_file(links=links,mode=mode)
 
     with h5py.File(fileout, 'a') as f:
         # Append the new time value
