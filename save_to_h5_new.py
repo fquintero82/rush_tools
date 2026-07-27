@@ -48,7 +48,7 @@ def write_to_h5(states,links, validtime,issuetime,writetime, mode,fileout='/Dedi
 
     #if fileout does not exist, create it with the required structure
     if not os.path.exists(fileout):
-        _create_empty_file(links=links,mode=mode)
+        create_empty_file(links=links,mode=mode)
 
     with h5py.File(fileout, 'a') as f:
         # Append the new time value
@@ -77,5 +77,5 @@ def write_to_h5(states,links, validtime,issuetime,writetime, mode,fileout='/Dedi
             f[var][:, current_size:current_size + len(validtime)] = states[var]
 
 if __name__=='__main__':
-    links = np.range(1010000,dtype=int)
+    links = np.arange(0,1010000,dtype=int)
     create_empty_file_states(links,year=2000)
