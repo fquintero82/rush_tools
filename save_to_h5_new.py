@@ -28,7 +28,7 @@ def create_empty_file_states(links = None,year=2000):
         for var in vars:
             f.create_dataset(var, 
                             shape=(n_links,nt),
-                            chunks=(n_links, 1),
+                            chunks=(1000, 1),
                             compression='gzip',
                             scaleoffset=2, #scale=2 means multiply by 10^2 (keeps 2 decimal places)
                             dtype=np.float32)
