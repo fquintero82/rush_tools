@@ -77,5 +77,5 @@ def write_to_h5(states,links, validtime,issuetime,writetime, mode,fileout='/Dedi
             f[var][:, current_size:current_size + len(validtime)] = states[var]
 
 if __name__=='__main__':
-    links = np.arange(0,1010000,dtype=int)
+    links = np.arange(0,1010000)
     create_empty_file_states(links,year=2000)
