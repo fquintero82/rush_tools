@@ -39,6 +39,7 @@ def write_to_h5(states,links, validtime,issuetime, mode,fileout='/Dedicated/IFC/
 
     #if fileout does not exist, create it with the required structure
     if not os.path.exists(fileout):
+        print('creating file')
         _create_empty_file(links=links,mode=mode)
 
     with h5py.File(fileout, 'a') as f:
