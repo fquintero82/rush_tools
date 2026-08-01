@@ -12,6 +12,7 @@ def _create_empty_file(links = None,mode='state',fileout='/Dedicated/IFC/rush/st
     if mode == 'state':
         vars = ['static', 'surface', 'toplayer', 'bottomlayer', 'swe','routing_output','routing_initial']
     elif mode == 'forecast':
+        print('creating forecast file')
         vars = ['routing_output']
     with h5py.File(fileout, 'w') as f:
         for var in vars:
