@@ -12,7 +12,6 @@ def _create_empty_file(links = None,mode='state',fileout='/Dedicated/IFC/rush/st
     if mode == 'state':
         vars = ['static', 'surface', 'toplayer', 'bottomlayer', 'swe','routing_output','routing_initial']
     elif mode == 'forecast':
-        print('creating forecast file')
         vars = ['routing_output']
 
     with h5py.File(fileout, 'w') as f:
@@ -29,7 +28,6 @@ def _create_empty_file(links = None,mode='state',fileout='/Dedicated/IFC/rush/st
         f['links'][:] = np.array(links, dtype=np.uint32)
         f.create_dataset('validtime', shape=(0,), maxshape=(None,), chunks=(1,), dtype=np.uint32, compression='gzip')  # Time dataset
         f.create_dataset('issuetime', shape=(0,), maxshape=(None,), chunks=(1,), dtype=np.uint32, compression='gzip')  # Time dataset
-        print('Created empty HDF5 file: {fileout}')
 
 def write_to_h5(states,links, validtime,issuetime, mode,fileout='/Dedicated/IFC/rush/states.h5'):
     """
@@ -42,7 +40,8 @@ def write_to_h5(states,links, validtime,issuetime, mode,fileout='/Dedicated/IFC/
     #if fileout does not exist, create it with the required structure
     if not os.path.exists(fileout):
         print('creating file')
-        _create_empty_file(links=links,mode=mode)
+        _create_empty_file(links=links,mode=mode,fileout=fileout)
+
 
     with h5py.File(fileout, 'a') as f:
         # Append the new time value
