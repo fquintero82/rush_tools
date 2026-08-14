@@ -72,7 +72,9 @@ def create_empty_file(links = None,mode='state',year=2000,path ='/Dedicated/IFC/
         zarr.create_array(store=fileout,name='issuetime', data = t_range)
         zarr.create_array(store=fileout,name='leadtime', data = np.arange(5*24))  # Time dataset
 
-def _write1(states,validtime,p):
+def _write1(states,links,validtime,p,year,mode,path):
+    if not os.path.exists(p): 
+        create_empty_file(links = links,mode=mode,year=year,path =path)
     z = zarr.open(p,'w')
     indices = np.where(np.isin(z['validtime'], validtime))[0]
     for var in states:
@@ -80,17 +82,21 @@ def _write1(states,validtime,p):
             raise ValueError(f"Variable '{var}' not found in the Zarr file.")
         z[var][:, indices] = states[var]
 
-def write_state(states, validtime,path):
+def write_state(states, links, validtime,path):
     year = datetime.datetime.fromtimestamp(validtime[0], tz=timezone.utc).year
     p = Path(path,f'states_{year}.zarr')
-    _write1(states,validtime,p)
+    mode='state'
+    _write1(states,links,validtime,p,year,mode,path)
 
-def write_simulation(states, validtime,path):
+def write_simulation(states,links, validtime,path):
     year = datetime.datetime.fromtimestamp(validtime[0], tz=timezone.utc).year
     p = Path(path,f'simulations_{year}.zarr')
-    _write1(states,validtime,p)
+    mode='simulations'
+    _write1(states,links,validtime,p,year,mode,path)
 
-def _write2(states,issuetime,p):    
+def _write2(states,links,issuetime,p,year,mode,path):
+    if not os.path.exists(p): 
+        create_empty_file(links = links,mode=mode,year=year,path =path)   
     z = zarr.open(p,'w')
     indices = np.where(np.isin(z['issuetime'], issuetime))[0]
     for var in states:
@@ -98,16 +104,18 @@ def _write2(states,issuetime,p):
             raise ValueError(f"Variable '{var}' not found in the Zarr file.")
         z[var][:, indices,0:5*24] = states[var]
 
-def write_forecast_timeseries(states,issuetime,path):
+def write_forecast_timeseries(states,links,issuetime,path):
     year = datetime.datetime.fromtimestamp(issuetime[0], tz=timezone.utc).year
     p = Path(path,f'forecast_timeseries_{year}.zarr')
-    _write2(states,issuetime,p)
+    mode='forecast_timeseries'
+    _write2(states,links,issuetime,p,year,mode,path)
     
 
-def write_forecast_maps(states,issuetime,path):
+def write_forecast_maps(states,links,issuetime,path):
     year = datetime.datetime.fromtimestamp(issuetime[0], tz=timezone.utc).year
     p = Path(path,f'forecast_maps_{year}.zarr')
-    _write2(states,issuetime,p)
+    mode='forecast_timeseries'
+    _write2(states,links,issuetime,p,year,mode,path)
 
 if __name__ == '__main__':
     links = np.arange(1000000,dtype=np.uint32)
