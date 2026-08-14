@@ -20,25 +20,25 @@ def create_empty_file(links = None,mode='state',year=2000,path ='/Dedicated/IFC/
     #chunks are for read
     #shards are for write
 
-    if mode == 'state':
+    if mode in ['state','states']:
         vars = ['static', 'surface', 'toplayer', 'bottomlayer', 'swe','routing_initial']
         shape = (n_links,nt) 
         chunks= (n_links, 1) #only need to read one field at a time
         shards =(n_links,24) # can write 24 fields at a time
         fileout=Path(path,f'states_{year}.zarr')
-    if mode=='simulation':
+    if mode in ['simulation','simulations']:
         vars = ['routing_output']
         shape = (n_links,nt)
-        chunks = (1,nt) # reads one time series for one link
-        shards =(1000,24) #writes one day for 1000 links at a time
+        chunks = (1000,nt) # reads one time series for one link
+        shards =(100000,nt) #writes one day for 1000 links at a time
         fileout=Path(path,f'simulations_{year}.zarr')
-    if mode == 'forecast_timeseries':
+    if mode in ['forecast_timeseries','forecasts_timeseries']:
         vars = ['routing_output']
         shape = (n_links,nt,5*24)
         chunks = (1,1,5*24) # read forecast for 1 link , 1 issue time, five days
         shards = (1000,24,5*24) 
         fileout=Path(path,f'forecast_timeseries_{year}.zarr')
-    if mode =='forecast_maps':
+    if mode in ['forecast_maps','forecasts_maps']:
         vars = ['routing_output']
         shape = (n_links,nt,5*24)
         chunks = (n_links,1,1)
@@ -65,22 +65,28 @@ def create_empty_file(links = None,mode='state',year=2000,path ='/Dedicated/IFC/
                             fill_value=np.nan)
         
     zarr.create_array(store=fileout,name='links', data = links)
-    if mode in ('state','simulation'):
+    if mode in ['state','simulation','states','simulations']:
         zarr.create_array(store=fileout,name='validtime', data = t_range)  # Time dataset
     
-    if mode in('forecast_timeseries','forecast_maps'):
+    if mode in ('forecast_timeseries','forecast_maps','forecasts_timeseries','forecasts_maps'):
         zarr.create_array(store=fileout,name='issuetime', data = t_range)
         zarr.create_array(store=fileout,name='leadtime', data = np.arange(5*24))  # Time dataset
 
 def _write1(states,links,validtime,p,year,mode,path):
     if not os.path.exists(p): 
         create_empty_file(links = links,mode=mode,year=year,path =path)
-    z = zarr.open(p,'w')
+    z = zarr.open(p)
+    print(z.tree())
+    #print(validtime)
+
     indices = np.where(np.isin(z['validtime'], validtime))[0]
+    #print(indices)
     for var in states:
         if var not in z:
             raise ValueError(f"Variable '{var}' not found in the Zarr file.")
-        z[var][:, indices] = states[var]
+        #print(z[var][:, indices].shape)
+        #print(states[var][:].shape)
+        z[var][:, indices] = states[var][:]
 
 def write_state(states, links, validtime,path):
     year = datetime.datetime.fromtimestamp(validtime[0], tz=timezone.utc).year
@@ -97,7 +103,7 @@ def write_simulation(states,links, validtime,path):
 def _write2(states,links,issuetime,p,year,mode,path):
     if not os.path.exists(p): 
         create_empty_file(links = links,mode=mode,year=year,path =path)   
-    z = zarr.open(p,'w')
+    z = zarr.open(p)
     indices = np.where(np.isin(z['issuetime'], issuetime))[0]
     for var in states:
         if var not in z:
