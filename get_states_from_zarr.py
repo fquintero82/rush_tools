@@ -9,7 +9,11 @@ from datetime import timezone
 def get_states_from_zarr(validtime,path='/Dedicated/IFC/rush/'):
     year = datetime.datetime.fromtimestamp(validtime, tz=timezone.utc).year
     p = Path(path,f'states_{year}.zarr')
+    if not os.path.exists(p):
+        raise ValueError(f"Initial conditions file {p} does not exists.")
+    print('opening ',p)
     z = zarr.open(p)
+    print(z.tree())
     # Find the index of the requested validtime
     validtime_index = np.where(z['validtime'][:] == validtime)[0]
     if len(validtime_index) == 0:
